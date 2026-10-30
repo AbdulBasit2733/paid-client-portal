@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "6c4e4103-1ae3-4ebf-b980-578ed1697d61",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\candidate.json",
+  "output": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\paid-client-access.html",
+  "specification": {
+    "sha256": "edf51b522aca30d12a359116977095a34d960fab8121e1aa102632e59e280d79",
+    "bytes": 5004
+  },
+  "artifact": {
+    "sha256": "b7fdc07af95e50a27e76ca530c646d3a21f218c05b00091bf5464743948cff45",
+    "bytes": 764744
+  }
+}

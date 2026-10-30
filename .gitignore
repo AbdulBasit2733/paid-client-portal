@@ -1,0 +1,55 @@
+# ==============================================================================
+# Paid Client Access Portal — Root .gitignore
+# ==============================================================================
+
+# 1. Environment Variables & Secrets (NEVER commit real credentials!)
+.env
+.env.local
+.env.*.local
+server/.env
+server/.env.local
+server/.env.*.local
+client/.env
+client/.env.local
+client/.env.*.local
+
+# Keep .env.example templates tracked in Git
+!.env.example
+!server/.env.example
+!client/.env.example
+
+# 2. Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+.pnpm-store/
+
+# 3. Build Outputs & Caches
+dist/
+dist-ssr/
+client/dist/
+server/dist/
+build/
+*.tsbuildinfo
+.vite/
+
+# 4. Logs & Runtime Data
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 5. Editor & OS Files
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Paid Client Access Integration & Portal Architecture",
+    "output": ".archify/architecture-paid-client-access-20261030-161000/paid-client-access.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "supa_auth",
+      "type": "security",
+      "label": "Supabase Auth",
+      "sublabel": "Session JWT (auth.uid)",
+      "pos": [60, 100],
+      "size": [165, 64],
+      "tag": "Tenant Identity"
+    },
+    {
+      "id": "stripe",
+      "type": "external",
+      "label": "Stripe Checkout",
+      "sublabel": "Checkout & Webhooks",
+      "pos": [430, 100],
+      "size": [170, 64],
+      "tag": "HMAC-SHA256"
+    },
+    {
+      "id": "zoho",
+      "type": "external",
+      "label": "Zoho CRM API v6",
+      "sublabel": "OAuth 2.0 Deals API",
+      "pos": [800, 100],
+      "size": [170, 64],
+      "tag": "Stage: Closed Won"
+    },
+    {
+      "id": "portal",
+      "type": "frontend",
+      "label": "Client Portal UI",
+      "sublabel": "React + Shadcn UI",
+      "pos": [60, 290],
+      "size": [165, 64]
+    },
+    {
+      "id": "express_api",
+      "type": "backend",
+      "label": "Checkout & Webhook",
+      "sublabel": "Express + Prisma ORM",
+      "pos": [430, 290],
+      "size": [170, 64]
+    },
+    {
+      "id": "zoho_sync",
+      "type": "backend",
+      "label": "Zoho Sync & Retry",
+      "sublabel": "UI & CLI Retry Worker",
+      "pos": [800, 290],
+      "size": [170, 64]
+    },
+    {
+      "id": "rls_docs",
+      "type": "database",
+      "label": "Document Contents",
+      "sublabel": "RLS Paid-Only SELECT",
+      "pos": [60, 490],
+      "size": [165, 64],
+      "tag": "Tenant Isolated"
+    },
+    {
+      "id": "purchases_db",
+      "type": "database",
+      "label": "Purchases & Events",
+      "sublabel": "Unique Idempotency",
+      "pos": [430, 490],
+      "size": [170, 64]
+    },
+    {
+      "id": "sync_logs_db",
+      "type": "database",
+      "label": "Zoho Sync Logs",
+      "sublabel": "PENDING / SUCCESS",
+      "pos": [800, 490],
+      "size": [170, 64]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Supabase PostgreSQL (Row Level Security — Direct Browser SELECT via auth.uid())",
+      "wraps": ["rls_docs", "purchases_db", "sync_logs_db"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "auth-to-portal",
+      "from": "supa_auth",
+      "to": "portal",
+      "label": "Session JWT",
+      "variant": "security"
+    },
+    {
+      "id": "portal-to-express",
+      "from": "portal",
+      "to": "express_api",
+      "label": "POST /checkout",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stripe-to-express",
+      "from": "stripe",
+      "to": "express_api",
+      "label": "Signed Webhook",
+      "variant": "emphasis"
+    },
+    {
+      "id": "express-to-purchases",
+      "from": "express_api",
+      "to": "purchases_db",
+      "label": "Upsert PAID"
+    },
+    {
+      "id": "purchases-to-docs",
+      "from": "purchases_db",
+      "to": "rls_docs",
+      "label": "Unlocks RLS Gate",
+      "variant": "security"
+    },
+    {
+      "id": "portal-to-rls-docs",
+      "from": "portal",
+      "to": "rls_docs",
+      "label": "Direct RLS Read",
+      "variant": "security"
+    },
+    {
+      "id": "express-to-zoho-sync",
+      "from": "express_api",
+      "to": "zoho_sync",
+      "label": "Sync or Retry",
+      "variant": "emphasis"
+    },
+    {
+      "id": "zoho-sync-to-zoho",
+      "from": "zoho_sync",
+      "to": "zoho",
+      "label": "PUT /Deals/{id}",
+      "variant": "emphasis"
+    },
+    {
+      "id": "zoho-sync-to-logs",
+      "from": "zoho_sync",
+      "to": "sync_logs_db",
+      "label": "Record Status",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Stripe Webhook & 3-Layer Idempotency",
+      "items": [
+        "Checkout embeds stable userId, documentId, and zohoDealId in Stripe metadata",
+        "Webhook verifies raw body HMAC-SHA256 signature and payment_status === 'paid'",
+        "Deduplicates on stripe_event_id, (user_id, document_id), and ZohoSyncLog === 'SUCCESS'"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Zoho CRM OAuth 2.0 & Outage Resilience",
+      "items": [
+        "Purchase entitlement commits in PostgreSQL before calling Zoho CRM API v6",
+        "If Zoho fails, client document access stays PAID and ZohoSyncLog records PENDING",
+        "Retry available via Portal UI button (POST /api/zoho/retry/:id) or CLI (npm run sync:zoho-retry)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Direct Supabase Reads & Tenant Isolation",
+      "items": [
+        "Browser queries documents, purchases, zoho_sync_logs, and document_contents directly from Supabase",
+        "PostgreSQL RLS restricts purchases and document_contents strictly to auth.uid()",
+        "Browser roles have SELECT-only privileges; only backend Prisma/service_role can write entitlements"
+      ]
+    }
+  ]
+}
