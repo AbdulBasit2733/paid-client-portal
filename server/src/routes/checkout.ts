@@ -127,8 +127,8 @@ checkoutRouter.post(
         payment_intent_data: {
           metadata: stableMetadata,
         },
-        success_url: `${env.CLIENT_URL}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${env.CLIENT_URL}/?checkout=cancelled`,
+        success_url: `${env.CLIENT_URL.replace(/\/$/, '')}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${env.CLIENT_URL.replace(/\/$/, '')}/?checkout=cancelled`,
       });
 
       res.json({
