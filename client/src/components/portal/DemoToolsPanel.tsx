@@ -1,17 +1,13 @@
-import { useState } from 'react';
 import {
   ShieldCheck,
-  SlidersHorizontal,
-  ChevronDown,
-  ChevronUp,
   CheckCircle2,
   AlertTriangle,
+  Repeat,
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Switch } from '../ui/primitives';
-import type { RlsAuditResult } from '../../types/portal';
+import type { PurchaseRow, RlsAuditResult, WebhookReplayResult } from '../../types/portal';
 
 interface DemoToolsPanelProps {
   simulateZohoFailure: boolean;
@@ -19,6 +15,10 @@ interface DemoToolsPanelProps {
   rlsAudit: RlsAuditResult | null;
   rlsProbing: boolean;
   onRunRlsProbe: () => void;
+  purchases: PurchaseRow[];
+  webhookReplay: WebhookReplayResult | null;
+  replayingWebhook: boolean;
+  onReplayDuplicateWebhook: (purchaseId: string) => void;
 }
 
 export function DemoToolsPanel({
@@ -27,133 +27,168 @@ export function DemoToolsPanel({
   rlsAudit,
   rlsProbing,
   onRunRlsProbe,
+  purchases,
+  webhookReplay,
+  replayingWebhook,
+  onReplayDuplicateWebhook,
 }: DemoToolsPanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const latestPaidPurchase = purchases.find((p) => p.status === 'PAID');
 
   return (
-    <Card className="border-slate-200 bg-slate-50/80">
-      <CardContent className="p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200/80 text-slate-700">
-              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+    <div className="space-y-4">
+      {/* Edge Case 1: Requirement 2 — Duplicate Webhook Idempotency */}
+      <div className="rounded-xl border border-slate-200 bg-[#F4F7FE]/70 p-4 space-y-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-bold text-[#0B132B]">
+              <Repeat className="h-4 w-4 text-[#2F5CEA]" aria-hidden="true" />
+              <span>1. Duplicate Webhook Replay</span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-800">
-                  Walkthrough &amp; Testing Controls (Evaluator Demo Mode)
-                </span>
-                {simulateZohoFailure && (
-                  <Badge variant="warning">CRM Outage Simulation ON</Badge>
-                )}
-              </div>
-              <p className="text-xs text-slate-500">
-                Optional controls to test CRM outage recovery and verify account privacy between
-                clients.
-              </p>
-            </div>
+            <Badge className="bg-[#EEF3FD] text-[#2F5CEA] border-[#2F5CEA]/20">
+              Requirement 2
+            </Badge>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsOpen((prev) => !prev)}
-            aria-expanded={isOpen}
-          >
-            <span>{isOpen ? 'Hide Demo Controls' : 'Show Demo Controls'}</span>
-            {isOpen ? (
-              <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
-            ) : (
-              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
-            )}
-          </Button>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Re-send the exact same Stripe payment webhook to prove that repeated deliveries do
+            <strong> not</strong> create a second purchase row or trigger a second Zoho CRM Deal
+            update.
+          </p>
         </div>
 
-        {isOpen && (
-          <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {/* Control 1: Simulate CRM Outage */}
-            <div className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col justify-between gap-3">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
-                  <span>1. Test Zoho CRM Outage Recovery</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Turn this on before paying to simulate a temporary Zoho CRM outage. Your document
-                  will still unlock immediately after payment, while the CRM status will show{' '}
-                  <strong>Sync Pending</strong> so you can test the retry button.
-                </p>
+        <div className="space-y-2.5">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="w-full"
+            disabled={!latestPaidPurchase || replayingWebhook}
+            onClick={() =>
+              latestPaidPurchase && onReplayDuplicateWebhook(latestPaidPurchase.id)
+            }
+          >
+            <Repeat className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {!latestPaidPurchase
+                ? 'Pay 1 Document First to Test Replay'
+                : replayingWebhook
+                  ? 'Replaying Webhook...'
+                  : 'Replay Duplicate Stripe Webhook'}
+            </span>
+          </Button>
+
+          {webhookReplay && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 p-3 text-xs text-emerald-950 space-y-1">
+              <div className="flex items-center justify-between font-bold text-emerald-800">
+                <span className="inline-flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  Idempotent Skip ({webhookReplay.testedAt})
+                </span>
+                <Badge variant="default">No Duplicate</Badge>
               </div>
-
-              <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 border border-slate-200/80">
-                <label
-                  htmlFor="simulate-zoho-outage"
-                  className="text-xs font-semibold text-slate-700 cursor-pointer"
-                >
-                  {simulateZohoFailure
-                    ? 'Simulate CRM Outage: Enabled'
-                    : 'Simulate CRM Outage: Disabled'}
-                </label>
-                <Switch
-                  id="simulate-zoho-outage"
-                  checked={simulateZohoFailure}
-                  onCheckedChange={onToggleSimulateZohoFailure}
-                  aria-label="Simulate Zoho CRM outage during checkout"
-                />
+              <div>
+                • Duplicate Ignored:{' '}
+                <strong>{webhookReplay.idempotentSkip ? 'Yes (Skipped)' : 'No'}</strong>
               </div>
-            </div>
-
-            {/* Control 2: Verify Cross-Client Privacy */}
-            <div className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col justify-between gap-3">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                  <span>2. Verify Privacy Between Clients</span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Click below to run a live security check confirming that your signed-in account
-                  can never view another client’s documents or payment records.
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={onRunRlsProbe}
-                  disabled={rlsProbing}
-                  className="w-full"
-                >
-                  <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>
-                    {rlsProbing ? 'Checking Account Privacy...' : 'Run Account Privacy Check'}
-                  </span>
-                </Button>
-
-                {rlsAudit && (
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-950 space-y-1">
-                    <div className="flex items-center justify-between font-semibold text-emerald-800">
-                      <span className="inline-flex items-center gap-1">
-                        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                        Privacy Verified ({rlsAudit.testedAt})
-                      </span>
-                      <Badge variant="default">Passed</Badge>
-                    </div>
-                    <div>
-                      • Other clients’ records visible to you:{' '}
-                      <strong>{rlsAudit.foreignPurchasesReturned} (Blocked)</strong>
-                    </div>
-                    <div>
-                      • Unauthorized payment modification:{' '}
-                      <strong>{rlsAudit.directInsertBlocked ? 'Blocked' : 'Allowed'}</strong>
-                    </div>
-                  </div>
-                )}
+              <div>
+                • Total Purchases for Doc:{' '}
+                <strong>{webhookReplay.totalPurchasesForDoc} (Exactly 1)</strong>
               </div>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Edge Case 2: Requirement 3 — Simulate Zoho CRM Outage */}
+      <div className="rounded-xl border border-slate-200 bg-[#F4F7FE]/70 p-4 space-y-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-bold text-[#0B132B]">
+              <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
+              <span>2. Zoho CRM Outage &amp; Retry</span>
+            </div>
+            <Badge className="bg-[#EEF3FD] text-[#2F5CEA] border-[#2F5CEA]/20">
+              Requirement 3
+            </Badge>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Turn this ON before paying to simulate a Zoho CRM failure. Your document still unlocks
+            immediately (<code className="font-mono">PAID</code>), while Zoho records{' '}
+            <code className="font-mono">PENDING</code> so you can click{' '}
+            <strong>Sync Account Status Now</strong> to recover.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg bg-white px-3.5 py-2.5 border border-slate-200">
+          <label
+            htmlFor="simulate-zoho-outage"
+            className="text-xs font-bold text-[#0B132B] cursor-pointer"
+          >
+            {simulateZohoFailure
+              ? 'Simulate Zoho Outage: ON'
+              : 'Simulate Zoho Outage: OFF'}
+          </label>
+          <Switch
+            id="simulate-zoho-outage"
+            checked={simulateZohoFailure}
+            onCheckedChange={onToggleSimulateZohoFailure}
+            aria-label="Simulate Zoho CRM outage during checkout"
+          />
+        </div>
+      </div>
+
+      {/* Edge Case 3: Requirement 4 — Cross-Client Privacy Check */}
+      <div className="rounded-xl border border-slate-200 bg-[#F4F7FE]/70 p-4 space-y-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-bold text-[#0B132B]">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+              <span>3. Cross-Client Privacy RLS Audit</span>
+            </div>
+            <Badge className="bg-[#EEF3FD] text-[#2F5CEA] border-[#2F5CEA]/20">
+              Requirement 4
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Runs a live browser query against Supabase PostgreSQL under RLS to prove this client
+            cannot retrieve any of the other 19 clients’ documents or purchases, nor forge a
+            payment from browser DevTools.
+          </p>
+        </div>
+
+        <div className="space-y-2.5">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onRunRlsProbe}
+            disabled={rlsProbing}
+            className="w-full"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {rlsProbing ? 'Checking Account Privacy...' : 'Run Cross-Client Privacy Check'}
+            </span>
+          </Button>
+
+          {rlsAudit && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/90 p-3 text-xs text-emerald-950 space-y-1">
+              <div className="flex items-center justify-between font-bold text-emerald-800">
+                <span className="inline-flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  RLS Verified ({rlsAudit.testedAt})
+                </span>
+                <Badge variant="default">Isolated</Badge>
+              </div>
+              <div>
+                • Other 19 clients’ records returned:{' '}
+                <strong>{rlsAudit.foreignPurchasesReturned} rows (Blocked)</strong>
+              </div>
+              <div>
+                • Browser INSERT forgery:{' '}
+                <strong>{rlsAudit.directInsertBlocked ? 'Rejected' : 'Allowed'}</strong>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

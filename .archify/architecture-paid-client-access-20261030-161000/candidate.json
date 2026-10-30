@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Paid Client Access Integration & Portal Architecture",
+    "title": "Paid Client Access Integration & Portal Architecture (#2F5CEA Theme • 20 Clients & 28 Zoho Deals)",
     "output": ".archify/architecture-paid-client-access-20261030-161000/paid-client-access.html",
     "quality_profile": "showcase"
   },
@@ -11,44 +11,44 @@
       "id": "supa_auth",
       "type": "security",
       "label": "Supabase Auth",
-      "sublabel": "Session JWT (auth.uid)",
+      "sublabel": "20 Clients JWT (auth.uid)",
       "pos": [60, 100],
-      "size": [165, 64],
+      "size": [175, 64],
       "tag": "Tenant Identity"
     },
     {
       "id": "stripe",
       "type": "external",
       "label": "Stripe Checkout",
-      "sublabel": "Checkout & Webhooks",
+      "sublabel": "INR Checkout & Webhooks",
       "pos": [430, 100],
-      "size": [170, 64],
+      "size": [175, 64],
       "tag": "HMAC-SHA256"
     },
     {
       "id": "zoho",
       "type": "external",
       "label": "Zoho CRM API v6",
-      "sublabel": "OAuth 2.0 Deals API",
+      "sublabel": "28 Deals (OAuth 2.0)",
       "pos": [800, 100],
-      "size": [170, 64],
+      "size": [175, 64],
       "tag": "Stage: Closed Won"
     },
     {
       "id": "portal",
       "type": "frontend",
       "label": "Client Portal UI",
-      "sublabel": "React + Shadcn UI",
+      "sublabel": "React + Shadcn Sheets",
       "pos": [60, 290],
-      "size": [165, 64]
+      "size": [175, 64]
     },
     {
       "id": "express_api",
       "type": "backend",
       "label": "Checkout & Webhook",
-      "sublabel": "Express + Prisma ORM",
+      "sublabel": "Express + Verify + Replay",
       "pos": [430, 290],
-      "size": [170, 64]
+      "size": [175, 64]
     },
     {
       "id": "zoho_sync",
@@ -56,15 +56,15 @@
       "label": "Zoho Sync & Retry",
       "sublabel": "UI & CLI Retry Worker",
       "pos": [800, 290],
-      "size": [170, 64]
+      "size": [175, 64]
     },
     {
       "id": "rls_docs",
       "type": "database",
-      "label": "Document Contents",
-      "sublabel": "RLS Paid-Only SELECT",
+      "label": "Docs & Contents",
+      "sublabel": "28 Docs + RLS Paid Gate",
       "pos": [60, 490],
-      "size": [165, 64],
+      "size": [175, 64],
       "tag": "Tenant Isolated"
     },
     {
@@ -73,7 +73,7 @@
       "label": "Purchases & Events",
       "sublabel": "Unique Idempotency",
       "pos": [430, 490],
-      "size": [170, 64]
+      "size": [175, 64]
     },
     {
       "id": "sync_logs_db",
@@ -81,7 +81,7 @@
       "label": "Zoho Sync Logs",
       "sublabel": "PENDING / SUCCESS",
       "pos": [800, 490],
-      "size": [170, 64]
+      "size": [175, 64]
     }
   ],
   "boundaries": [
@@ -103,7 +103,7 @@
       "id": "portal-to-express",
       "from": "portal",
       "to": "express_api",
-      "label": "POST /checkout",
+      "label": "Checkout & Verify",
       "variant": "emphasis"
     },
     {
@@ -158,29 +158,29 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Stripe Webhook & 3-Layer Idempotency",
+      "title": "Stripe Webhook, Reconciliation & 3-Layer Idempotency",
       "items": [
-        "Checkout embeds stable userId, documentId, and zohoDealId in Stripe metadata",
+        "Checkout embeds userId, documentId, and per-document zohoDealId in Stripe metadata",
         "Webhook verifies raw body HMAC-SHA256 signature and payment_status === 'paid'",
-        "Deduplicates on stripe_event_id, (user_id, document_id), and ZohoSyncLog === 'SUCCESS'"
+        "Deduplicates via stripe_event_id, (user_id, document_id), and ZohoSyncLog === 'SUCCESS'"
       ]
     },
     {
       "dot": "amber",
-      "title": "Zoho CRM OAuth 2.0 & Outage Resilience",
+      "title": "20 Clients, 28 Zoho CRM Deals & Outage Resilience",
       "items": [
-        "Purchase entitlement commits in PostgreSQL before calling Zoho CRM API v6",
+        "db:setup auto-creates all 28 Deals in Zoho CRM (zohoapis.in) and links each Document.zohoDealId",
         "If Zoho fails, client document access stays PAID and ZohoSyncLog records PENDING",
-        "Retry available via Portal UI button (POST /api/zoho/retry/:id) or CLI (npm run sync:zoho-retry)"
+        "Retry works from the Logs Sheet UI (POST /api/zoho/retry/:id) or CLI (npm run sync:zoho-retry)"
       ]
     },
     {
       "dot": "cyan",
-      "title": "Direct Supabase Reads & Tenant Isolation",
+      "title": "#2F5CEA Portal UI, Shadcn Sheets & Supabase RLS",
       "items": [
-        "Browser queries documents, purchases, zoho_sync_logs, and document_contents directly from Supabase",
-        "PostgreSQL RLS restricts purchases and document_contents strictly to auth.uid()",
-        "Browser roles have SELECT-only privileges; only backend Prisma/service_role can write entitlements"
+        "Sign-In view provides a searchable 20-client directory; single-doc accounts auto-expand on login",
+        "Global Payment Loading Overlay + separate Shadcn Sheets for Logs and Demo Actions",
+        "PostgreSQL RLS restricts purchases, zoho_sync_logs, and document_contents strictly to auth.uid()"
       ]
     }
   ]

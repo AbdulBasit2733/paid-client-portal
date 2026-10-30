@@ -2,21 +2,22 @@
 
 @layer base {
   :root {
-    --color-primary: #2563EB;
+    --color-primary: #2F5CEA;
+    --color-primary-hover: #244BC5;
     --color-on-primary: #FFFFFF;
-    --color-secondary: #F1F5F9;
-    --color-on-secondary: #0F172A;
+    --color-secondary: #EEF3FD;
+    --color-on-secondary: #0B132B;
     --color-accent: #16A34A;
     --color-on-accent: #FFFFFF;
-    --color-background: #F8FAFC;
-    --color-foreground: #0F172A;
+    --color-background: #F4F7FE;
+    --color-foreground: #0B132B;
     --color-card: #FFFFFF;
-    --color-card-foreground: #0F172A;
-    --color-muted: #F1F5F9;
+    --color-card-foreground: #0B132B;
+    --color-muted: #EEF3FD;
     --color-muted-foreground: #475569;
     --color-border: #E2E8F0;
     --color-destructive: #DC2626;
-    --color-ring: #2563EB;
+    --color-ring: #2F5CEA;
   }
 
   body {

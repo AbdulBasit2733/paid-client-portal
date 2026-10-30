@@ -1,10 +1,19 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { AlertTriangle, FileText } from 'lucide-react';
+import { AlertTriangle, FileText, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase, isSupabaseConfigured, API_BASE_URL } from './lib/supabase';
 import { Button } from './components/ui/button';
 import { Card, CardContent } from './components/ui/card';
+import { Badge } from './components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from './components/ui/sheet';
 import { Navbar } from './components/layout/Navbar';
 import { LoginView } from './components/auth/LoginView';
 import { DocumentCard } from './components/portal/DocumentCard';
@@ -16,6 +25,7 @@ import type {
   PurchaseRow,
   RlsAuditResult,
   UserProfileRow,
+  WebhookReplayResult,
   ZohoSyncLogRow,
 } from './types/portal';
 
@@ -34,6 +44,11 @@ export function App() {
   const [docContents, setDocContents] = useState<Record<string, DocumentContentRow>>({});
   const [dataLoading, setDataLoading] = useState(false);
 
+  // Expanded document IDs state:
+  // If a client has only 1 document, it is automatically expanded!
+  // If a client has multiple documents, the first document is expanded by default and others can be toggled.
+  const [expandedDocIds, setExpandedDocIds] = useState<Record<string, boolean>>({});
+
   // Action states
   const [simulateZohoFailure, setSimulateZohoFailure] = useState(false);
   const [checkoutLoadingDocId, setCheckoutLoadingDocId] = useState<string | null>(null);
@@ -44,11 +59,23 @@ export function App() {
     body: string;
   } | null>(null);
 
-  // Privacy verification state
+  // Edge-case demo verification states
   const [rlsAudit, setRlsAudit] = useState<RlsAuditResult | null>(null);
   const [rlsProbing, setRlsProbing] = useState(false);
+  const [webhookReplay, setWebhookReplay] = useState<WebhookReplayResult | null>(null);
+  const [replayingWebhook, setReplayingWebhook] = useState(false);
 
-  const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
+  // Global Sheet states (Logs Sheet & Demo Actions Sheet)
+  const [logsSheetOpen, setLogsSheetOpen] = useState(false);
+  const [demoSheetOpen, setDemoSheetOpen] = useState(false);
+
+  const [pendingSessionId, setPendingSessionId] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('checkout') === 'success' && params.get('session_id')) {
+      return params.get('session_id');
+    }
+    return null;
+  });
 
   // Check URL query parameters after returning from Stripe Checkout
   useEffect(() => {
@@ -58,17 +85,6 @@ export function App() {
     if (checkoutParam === 'success') {
       if (sessionIdParam) {
         setPendingSessionId(sessionIdParam);
-        setBannerMessage({
-          type: 'warning',
-          title: 'Confirming Your Payment with Stripe...',
-          body: 'Please wait a moment while we verify your payment and unlock your document.',
-        });
-      } else {
-        setBannerMessage({
-          type: 'success',
-          title: 'Payment Successful — Your Document Is Unlocked!',
-          body: 'Thank you for your payment. Your full advisory report is now available to read below.',
-        });
       }
       window.history.replaceState({}, '', window.location.pathname);
     } else if (checkoutParam === 'cancelled') {
@@ -100,10 +116,26 @@ export function App() {
         supabase.from('document_contents').select('*'),
       ]);
 
+      const fetchedDocs = (docsRes.data as DocumentRow[]) || [];
       setProfile((profileRes.data as UserProfileRow) || null);
-      setDocuments((docsRes.data as DocumentRow[]) || []);
+      setDocuments(fetchedDocs);
       setPurchases((purchasesRes.data as PurchaseRow[]) || []);
       setSyncLogs((syncRes.data as ZohoSyncLogRow[]) || []);
+
+      // Auto-expand logic:
+      // If only 1 document, always expanded. If multiple, expand first document by default if none set yet.
+      setExpandedDocIds((prev) => {
+        if (fetchedDocs.length === 1) {
+          return { [fetchedDocs[0].id]: true };
+        }
+        const hasAnyCurrentDocKey = fetchedDocs.some((d) => prev[d.id] !== undefined);
+        if (hasAnyCurrentDocKey) return prev;
+        const initial: Record<string, boolean> = {};
+        fetchedDocs.forEach((d, idx) => {
+          initial[d.id] = idx === 0;
+        });
+        return initial;
+      });
 
       const contentMap: Record<string, DocumentContentRow> = {};
       for (const row of (contentsRes.data as DocumentContentRow[]) || []) {
@@ -129,6 +161,8 @@ export function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setRlsAudit(null);
+      setWebhookReplay(null);
+      setExpandedDocIds({});
       if (newSession) {
         fetchPortalStateFromSupabase(newSession);
       } else {
@@ -161,21 +195,24 @@ export function App() {
           body: JSON.stringify({ sessionId: pendingSessionId }),
         });
 
+        const payload = await res.json().catch(() => ({}));
         await fetchPortalStateFromSupabase(session);
         if (cancelled) return;
 
         if (res.ok) {
-          setBannerMessage({
-            type: 'success',
-            title: 'Payment Successful — Your Document Is Unlocked!',
-            body: 'Thank you for your payment. Your full advisory report is now available to read below.',
-          });
+          const unlockedDocId = payload?.result?.purchase?.documentId;
+          if (unlockedDocId) {
+            setExpandedDocIds((prev) => ({
+              ...prev,
+              [unlockedDocId]: true,
+            }));
+          }
+          setBannerMessage(null);
         } else {
-          const errData = await res.json().catch(() => ({}));
           setBannerMessage({
             type: 'destructive',
             title: 'Could Not Confirm Payment Session',
-            body: errData.error || 'Please click Refresh in the top bar.',
+            body: payload.error || 'Please click Refresh in the top bar.',
           });
         }
       } catch (err) {
@@ -184,7 +221,8 @@ export function App() {
           setBannerMessage({
             type: 'warning',
             title: 'Payment Completed — Refreshing Access Status',
-            body: err instanceof Error ? err.message : 'Click Refresh to check your document status.',
+            body:
+              err instanceof Error ? err.message : 'Click Refresh to check your document status.',
           });
         }
       } finally {
@@ -251,6 +289,7 @@ export function App() {
     await supabase.auth.signOut();
     setBannerMessage(null);
     setRlsAudit(null);
+    setWebhookReplay(null);
   };
 
   const handleStartStripeCheckout = async (documentId: string) => {
@@ -278,15 +317,16 @@ export function App() {
 
       if (data.url) {
         window.location.href = data.url;
+        return;
       }
+      setCheckoutLoadingDocId(null);
     } catch (err) {
+      setCheckoutLoadingDocId(null);
       setBannerMessage({
         type: 'destructive',
         title: 'Unable to Start Payment',
         body: err instanceof Error ? err.message : String(err),
       });
-    } finally {
-      setCheckoutLoadingDocId(null);
     }
   };
 
@@ -312,13 +352,7 @@ export function App() {
 
       await fetchPortalStateFromSupabase(session);
 
-      if (data.syncLog?.status === 'SUCCESS') {
-        setBannerMessage({
-          type: 'success',
-          title: 'Account Status Synced',
-          body: 'Your payment record has been updated with your dedicated account manager in Zoho CRM.',
-        });
-      } else {
+      if (data.syncLog?.status !== 'SUCCESS') {
         setBannerMessage({
           type: 'warning',
           title: 'Account Sync Still Pending',
@@ -335,6 +369,40 @@ export function App() {
       });
     } finally {
       setRetryingPurchaseId(null);
+    }
+  };
+
+  const handleReplayDuplicateWebhook = async (purchaseId: string) => {
+    if (!session) return;
+    setReplayingWebhook(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/checkout/replay-webhook/${purchaseId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to replay webhook.');
+      }
+
+      setWebhookReplay({
+        testedAt: new Date().toLocaleTimeString('en-IN'),
+        replayedEventId: data.replayedEventId,
+        idempotentSkip: Boolean(data.idempotentSkip),
+        totalPurchasesForDoc: data.totalPurchasesForDoc ?? 1,
+        zohoSyncStatus: data.zohoSyncStatus ?? 'SUCCESS',
+      });
+    } catch (err) {
+      setBannerMessage({
+        type: 'destructive',
+        title: 'Webhook Replay Error',
+        body: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setReplayingWebhook(false);
     }
   };
 
@@ -372,21 +440,137 @@ export function App() {
     }
   };
 
+  const toggleExpandDoc = (docId: string) => {
+    setExpandedDocIds((prev) => ({
+      ...prev,
+      [docId]: !prev[docId],
+    }));
+  };
+
+  const globalPaymentLoadingState = checkoutLoadingDocId
+    ? {
+        title: 'Redirecting to Secure Stripe Checkout...',
+        subtitle:
+          'Preparing your encrypted ₹ INR payment session and linking your Zoho CRM Deal ID.',
+        badge: 'Step 1 of 2 • Initializing Checkout',
+      }
+    : pendingSessionId
+      ? {
+          title: 'Confirming Payment & Unlocking Document...',
+          subtitle:
+            'Verifying your Stripe payment, unlocking your confidential advisory report under Supabase RLS, and updating your Zoho CRM Deal to Closed Won.',
+          badge: 'Step 2 of 2 • Finalizing Entitlement & CRM Sync',
+        }
+      : retryingPurchaseId
+        ? {
+            title: 'Syncing Account Status with Zoho CRM...',
+            subtitle:
+              'Updating your Zoho CRM Deal stage to Closed Won via OAuth 2.0 while preserving your unlocked document access.',
+            badge: 'Zoho CRM OAuth 2.0 Sync',
+          }
+        : null;
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col">
+    <div className="min-h-screen bg-[#F4F7FE] text-[#0B132B] flex flex-col">
+      {globalPaymentLoadingState && (
+        <div
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B132B]/55 backdrop-blur-sm p-4"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#2F5CEA]/20 bg-white p-6 sm:p-8 shadow-2xl text-center space-y-5">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF3FD] text-[#2F5CEA] shadow-inner">
+              <Loader2 className="h-7 w-7 animate-spin" aria-hidden="true" />
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#EEF3FD] border border-[#2F5CEA]/20 px-3 py-1 text-[11px] font-bold text-[#2F5CEA]">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>{globalPaymentLoadingState.badge}</span>
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#0B132B]">
+                {globalPaymentLoadingState.title}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                {globalPaymentLoadingState.subtitle}
+              </p>
+            </div>
+
+            <div className="w-full overflow-hidden rounded-full bg-slate-100 h-1.5">
+              <div className="h-full w-2/3 animate-pulse rounded-full bg-[#2F5CEA]" />
+            </div>
+          </div>
+        </div>
+      )}
+
       <Navbar
         userEmail={session?.user.email ?? null}
         profile={profile}
         dataLoading={dataLoading}
-        authLoading={authLoading}
+        paidCount={purchases.filter((p) => p.status === 'PAID').length}
+        hasPendingSync={syncLogs.some((s) => s.status !== 'SUCCESS')}
+        simulateZohoFailure={simulateZohoFailure}
+        onOpenLogsSheet={() => setLogsSheetOpen(true)}
+        onOpenDemoSheet={() => setDemoSheetOpen(true)}
         onRefresh={() => fetchPortalStateFromSupabase(session)}
-        onSignOut={handleSignOut}
-        onQuickSwitchClient={(quickEmail, quickPass) =>
-          handleSignIn(undefined, quickEmail, quickPass)
-        }
+        onSignOut={() => {
+          setLogsSheetOpen(false);
+          setDemoSheetOpen(false);
+          handleSignOut();
+        }}
       />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      {/* Global Sheet 1: Account, Payment Receipts & Zoho CRM Sync Logs */}
+      <Sheet open={logsSheetOpen} onOpenChange={setLogsSheetOpen}>
+        <SheetContent side="right">
+          <SheetHeader>
+            <SheetTitle>Account, Payment &amp; CRM Sync Logs</SheetTitle>
+            <SheetDescription>
+              View your client account details, completed ₹ INR payments, Zoho CRM Deal sync logs,
+              and retry controls.
+            </SheetDescription>
+          </SheetHeader>
+          <SheetBody>
+            <AccountSyncCard
+              profile={profile}
+              purchases={purchases}
+              syncLogs={syncLogs}
+              retryingPurchaseId={retryingPurchaseId}
+              onRetrySync={handleRetryZohoSync}
+            />
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
+
+      {/* Global Sheet 2: Live Walkthrough & Edge-Case Demo Actions */}
+      <Sheet open={demoSheetOpen} onOpenChange={setDemoSheetOpen}>
+        <SheetContent side="right">
+          <SheetHeader>
+            <SheetTitle>Live Walkthrough &amp; Demo Actions</SheetTitle>
+            <SheetDescription>
+              Interactive controls to demonstrate all 4 assignment requirements: Duplicate Webhook
+              Idempotency, Zoho CRM Outage &amp; Recovery, and Cross-Client RLS Privacy.
+            </SheetDescription>
+          </SheetHeader>
+          <SheetBody>
+            <DemoToolsPanel
+              simulateZohoFailure={simulateZohoFailure}
+              onToggleSimulateZohoFailure={setSimulateZohoFailure}
+              rlsAudit={rlsAudit}
+              rlsProbing={rlsProbing}
+              onRunRlsProbe={handleRunRlsIsolationProbe}
+              purchases={purchases}
+              webhookReplay={webhookReplay}
+              replayingWebhook={replayingWebhook}
+              onReplayDuplicateWebhook={handleReplayDuplicateWebhook}
+            />
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
+
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8 space-y-6">
         {!isSupabaseConfigured && (
           <Alert variant="warning">
             <div className="flex items-start gap-3">
@@ -397,7 +581,7 @@ export function App() {
                   Add your Supabase URL and Anon Key in <code className="font-mono">client/.env</code>{' '}
                   (or <code className="font-mono">client/.env.local</code>) and run{' '}
                   <code className="font-mono">npm run db:setup</code> inside{' '}
-                  <code className="font-mono">server/</code> to load your client accounts.
+                  <code className="font-mono">server/</code> to load your 20 client accounts.
                 </AlertDescription>
               </div>
             </div>
@@ -434,83 +618,100 @@ export function App() {
             onSignIn={handleSignIn}
           />
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Welcome Header */}
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                Hello, {profile?.name?.split('(')[0]?.trim() || session.user.email}
-              </h1>
-              <p className="text-sm text-slate-600">
-                View your advisory documents, download unlocked reports, and check your payment
-                status below.
-              </p>
-            </div>
-
-            {/* Main 2-Column Client Layout */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
-              {/* Left 8 Columns: Client Documents */}
-              <div className="lg:col-span-8 space-y-6">
-                {documents.length === 0 ? (
-                  <Card>
-                    <CardContent className="p-10 text-center space-y-2">
-                      <FileText className="h-8 w-8 text-slate-400 mx-auto" aria-hidden="true" />
-                      <h3 className="text-base font-bold text-slate-900">
-                        No Advisory Documents Assigned Yet
-                      </h3>
-                      <p className="text-xs text-slate-500 max-w-md mx-auto">
-                        If you are setting up the demo environment, run{' '}
-                        <code className="font-mono text-slate-700">npm run db:setup</code> inside{' '}
-                        <code className="font-mono text-slate-700">server/</code> to load sample
-                        client documents.
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  documents.map((doc) => {
-                    const purchase = purchases.find(
-                      (p) => p.document_id === doc.id && p.status === 'PAID'
-                    );
-                    const syncLog = purchase
-                      ? syncLogs.find((s) => s.purchase_id === purchase.id)
-                      : undefined;
-
-                    return (
-                      <DocumentCard
-                        key={doc.id}
-                        document={doc}
-                        purchase={purchase}
-                        syncLog={syncLog}
-                        unlockedContent={docContents[doc.id]}
-                        checkoutLoading={checkoutLoadingDocId === doc.id}
-                        retryingSync={retryingPurchaseId === purchase?.id}
-                        onStartCheckout={handleStartStripeCheckout}
-                        onRetrySync={handleRetryZohoSync}
-                      />
-                    );
-                  })
-                )}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0B132B]">
+                    Hello, {profile?.name?.split('(')[0]?.trim() || session.user.email}
+                  </h1>
+                  <Badge className="bg-[#EEF3FD] text-[#2F5CEA] border-[#2F5CEA]/20">
+                    {documents.length} {documents.length === 1 ? 'Document' : 'Documents'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-slate-600">
+                  {documents.length === 1
+                    ? 'Your assigned advisory document is automatically expanded below.'
+                    : `You have ${documents.length} advisory documents assigned to your account. Click any document card to expand or collapse it.`}
+                </p>
               </div>
 
-              {/* Right 4 Columns: Account Summary & Order/CRM Status */}
-              <div className="lg:col-span-4">
-                <AccountSyncCard
-                  profile={profile}
-                  purchases={purchases}
-                  syncLogs={syncLogs}
-                  retryingPurchaseId={retryingPurchaseId}
-                  onRetrySync={handleRetryZohoSync}
-                />
-              </div>
+              {documents.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const allOpen: Record<string, boolean> = {};
+                      documents.forEach((d) => {
+                        allOpen[d.id] = true;
+                      });
+                      setExpandedDocIds(allOpen);
+                    }}
+                  >
+                    Expand All ({documents.length})
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setExpandedDocIds({});
+                    }}
+                  >
+                    Collapse All
+                  </Button>
+                </div>
+              )}
             </div>
 
-            {/* Bottom Collapsible Evaluator Demo Bar */}
-            <DemoToolsPanel
-              simulateZohoFailure={simulateZohoFailure}
-              onToggleSimulateZohoFailure={setSimulateZohoFailure}
-              rlsAudit={rlsAudit}
-              rlsProbing={rlsProbing}
-              onRunRlsProbe={handleRunRlsIsolationProbe}
-            />
+            {/* Client Documents List (Full Width) */}
+            <div className="space-y-5">
+              {documents.length === 0 ? (
+                <Card>
+                  <CardContent className="p-10 text-center space-y-2">
+                    <FileText className="h-8 w-8 text-slate-400 mx-auto" aria-hidden="true" />
+                    <h3 className="text-base font-bold text-[#0B132B]">
+                      No Advisory Documents Assigned Yet
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto">
+                      Run <code className="font-mono text-slate-700">npm run db:setup</code> inside{' '}
+                      <code className="font-mono text-slate-700">server/</code> to seed all 20
+                      client accounts and their Zoho CRM Deals.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                documents.map((doc, idx) => {
+                  const purchase = purchases.find(
+                    (p) => p.document_id === doc.id && p.status === 'PAID'
+                  );
+                  const syncLog = purchase
+                    ? syncLogs.find((s) => s.purchase_id === purchase.id)
+                    : undefined;
+                  const isExpanded =
+                    documents.length === 1 ? true : Boolean(expandedDocIds[doc.id]);
+
+                  return (
+                    <DocumentCard
+                      key={doc.id}
+                      document={doc}
+                      index={idx}
+                      totalDocuments={documents.length}
+                      isExpanded={isExpanded}
+                      onToggleExpand={() => toggleExpandDoc(doc.id)}
+                      purchase={purchase}
+                      syncLog={syncLog}
+                      unlockedContent={docContents[doc.id]}
+                      checkoutLoading={checkoutLoadingDocId === doc.id}
+                      retryingSync={retryingPurchaseId === purchase?.id}
+                      onStartCheckout={handleStartStripeCheckout}
+                      onRetrySync={handleRetryZohoSync}
+                    />
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
       </main>

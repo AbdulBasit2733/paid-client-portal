@@ -19,7 +19,7 @@ const verifySessionSchema = z.object({
 
 /**
  * POST /api/checkout/create-session
- * Authenticates the client via Supabase JWT, looks up their stable User ID and Zoho Deal ID,
+ * Authenticates the client via Supabase JWT, looks up their stable User ID and target Zoho Deal ID,
  * and creates a Stripe Checkout Session carrying those stable IDs in metadata.
  */
 checkoutRouter.post(
@@ -89,15 +89,18 @@ checkoutRouter.post(
       if (isPlaceholderKey(env.STRIPE_SECRET_KEY)) {
         res.status(503).json({
           error:
-            'STRIPE_SECRET_KEY is not configured in server/.env yet. Add your Stripe test secret key to create live Checkout sessions.',
+            'STRIPE_SECRET_KEY is not configured in server/.env.local yet. Add your Stripe test secret key to create live Checkout sessions.',
         });
         return;
       }
 
+      // Use document-specific Zoho Deal ID if assigned, falling back to the client's primary Zoho Deal ID
+      const targetZohoDealId = document.zohoDealId || user.zohoDealId;
+
       const stableMetadata = {
         userId: user.id,
         documentId: document.id,
-        zohoDealId: user.zohoDealId,
+        zohoDealId: targetZohoDealId,
         simulateZohoFailure: String(Boolean(simulateZohoFailure)),
       };
 
@@ -147,8 +150,6 @@ checkoutRouter.post(
  * POST /api/checkout/verify-session
  * Verifies a completed Stripe Checkout session directly with Stripe on the server when the
  * browser returns from Stripe Checkout (`?checkout=success&session_id=cs_test_...`).
- * Uses the exact same idempotent `processVerifiedStripeEvent` pipeline as the webhook route
- * so that whichever arrives first (webhook or redirect) grants access once without duplication.
  */
 checkoutRouter.post(
   '/verify-session',
@@ -181,7 +182,6 @@ checkoutRouter.post(
         return;
       }
 
-      // Look up the matching Stripe checkout.session.completed event if already created by Stripe
       const recentEvents = await stripe.events.list({
         type: 'checkout.session.completed',
         limit: 15,
@@ -205,6 +205,71 @@ checkoutRouter.post(
       console.error('[CheckoutVerify] Failed to verify Stripe Checkout session:', err);
       res.status(500).json({
         error: 'Failed to verify Stripe Checkout session.',
+        details: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/checkout/replay-webhook/:purchaseId
+ * Demo & Verification helper for Requirement 2:
+ * Replays the exact `checkout.session.completed` webhook event for an existing paid purchase
+ * to demonstrate in real-time that a repeated webhook delivery is suppressed (`idempotentSkip: true`)
+ * without creating a second Purchase row or triggering a second Zoho CRM Deal update.
+ */
+checkoutRouter.post(
+  '/replay-webhook/:purchaseId',
+  requireSupabaseAuth,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const purchaseId = String(req.params.purchaseId);
+      const authUser = req.user!;
+
+      const purchase = await prisma.purchase.findUnique({
+        where: { id: purchaseId },
+      });
+
+      if (!purchase || purchase.userId !== authUser.id) {
+        res.status(404).json({ error: 'Paid purchase not found for this client.' });
+        return;
+      }
+
+      const replayedEvent = {
+        id: purchase.stripeEventId,
+        object: 'event',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: purchase.stripeSessionId,
+            object: 'checkout.session',
+            payment_status: 'paid',
+            amount_total: purchase.amountCents,
+            currency: purchase.currency,
+            client_reference_id: purchase.userId,
+            metadata: {
+              userId: purchase.userId,
+              documentId: purchase.documentId,
+              zohoDealId: purchase.zohoDealId,
+              simulateZohoFailure: 'false',
+            },
+          },
+        },
+      } as unknown as Stripe.Event;
+
+      const outcome = await processVerifiedStripeEvent(replayedEvent);
+      const totalPurchasesForDoc = await prisma.purchase.count({
+        where: { userId: purchase.userId, documentId: purchase.documentId },
+      });
+
+      res.json({
+        ...outcome,
+        replayedEventId: purchase.stripeEventId,
+        totalPurchasesForDoc,
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: 'Failed to replay webhook event.',
         details: err instanceof Error ? err.message : String(err),
       });
     }

@@ -5,16 +5,16 @@
   "status": "pass",
   "type": "architecture",
   "quality": "showcase",
-  "startedAt": "2026-10-30T10:41:00.142Z",
+  "startedAt": "2026-10-30T13:43:17.289Z",
   "specification": {
     "path": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\candidate.json",
-    "sha256": "edf51b522aca30d12a359116977095a34d960fab8121e1aa102632e59e280d79",
-    "bytes": 5004
+    "sha256": "66db3e98903d4ab50dcb166ae48064cb5e86cc045890994cd24cef2cf8c6bde0",
+    "bytes": 5131
   },
   "artifact": {
     "path": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\paid-client-access.html",
-    "sha256": "b7fdc07af95e50a27e76ca530c646d3a21f218c05b00091bf5464743948cff45",
-    "bytes": 764744
+    "sha256": "ad13420e2e3eba7816f1e93323c84c0fdde116eeaf19ee29c66e994d52167359",
+    "bytes": 765148
   },
   "stages": {
     "validate": {
@@ -24,7 +24,7 @@
       "execution": "embedded-in-deliver",
       "command": [
         "C:\\Program Files\\nodejs\\node.exe",
-        "C:\\Users\\Shoeb Khan\\.agents\\skills\\archify\\bin\\archify.mjs",
+        "D:\\Abdul Basit\\paid-client-portal\\.agents\\skills\\archify\\bin\\archify.mjs",
         "deliver",
         "architecture",
         "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\candidate.json",
@@ -38,8 +38,8 @@
         "ok": true,
         "command": "validate",
         "specification": {
-          "sha256": "edf51b522aca30d12a359116977095a34d960fab8121e1aa102632e59e280d79",
-          "bytes": 5004
+          "sha256": "66db3e98903d4ab50dcb166ae48064cb5e86cc045890994cd24cef2cf8c6bde0",
+          "bytes": 5131
         },
         "validation": {
           "checksPassed": 9,
@@ -54,10 +54,10 @@
     "deliver": {
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1268,
+      "durationMs": 862,
       "command": [
         "C:\\Program Files\\nodejs\\node.exe",
-        "C:\\Users\\Shoeb Khan\\.agents\\skills\\archify\\bin\\archify.mjs",
+        "D:\\Abdul Basit\\paid-client-portal\\.agents\\skills\\archify\\bin\\archify.mjs",
         "deliver",
         "architecture",
         "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\candidate.json",
@@ -68,19 +68,19 @@
       ],
       "receipt": {
         "schemaVersion": 1,
-        "receiptId": "6c4e4103-1ae3-4ebf-b980-578ed1697d61",
+        "receiptId": "de08746a-f925-4139-aa3e-eb9160460ad5",
         "ok": true,
         "command": "deliver",
         "type": "architecture",
         "input": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\candidate.json",
         "output": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\paid-client-access.html",
         "specification": {
-          "sha256": "edf51b522aca30d12a359116977095a34d960fab8121e1aa102632e59e280d79",
-          "bytes": 5004
+          "sha256": "66db3e98903d4ab50dcb166ae48064cb5e86cc045890994cd24cef2cf8c6bde0",
+          "bytes": 5131
         },
         "artifact": {
-          "sha256": "b7fdc07af95e50a27e76ca530c646d3a21f218c05b00091bf5464743948cff45",
-          "bytes": 764744
+          "sha256": "ad13420e2e3eba7816f1e93323c84c0fdde116eeaf19ee29c66e994d52167359",
+          "bytes": 765148
         },
         "validation": {
           "checksPassed": 9,
@@ -106,10 +106,10 @@
     "check": {
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 286,
+      "durationMs": 575,
       "command": [
         "C:\\Program Files\\nodejs\\node.exe",
-        "C:\\Users\\Shoeb Khan\\.agents\\skills\\archify\\bin\\archify.mjs",
+        "D:\\Abdul Basit\\paid-client-portal\\.agents\\skills\\archify\\bin\\archify.mjs",
         "check",
         "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\paid-client-access.html",
         "--require-provenance"
@@ -118,8 +118,8 @@
         "ok": true,
         "file": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\paid-client-access.html",
         "artifact": {
-          "sha256": "b7fdc07af95e50a27e76ca530c646d3a21f218c05b00091bf5464743948cff45",
-          "bytes": 764744
+          "sha256": "ad13420e2e3eba7816f1e93323c84c0fdde116eeaf19ee29c66e994d52167359",
+          "bytes": 765148
         },
         "checks": [
           {
@@ -186,7 +186,7 @@
             "containerBorderRuns": 0,
             "labelRouteClearanceIssues": 0,
             "labelCanvasOverflowIssues": 0,
-            "minLabelRouteClearance": 58.1,
+            "minLabelRouteClearance": 60.1,
             "desktopReadabilityIssues": 0,
             "viewportHeightIssues": 0,
             "minProjectedNodeTextPx": 7.5,
@@ -224,10 +224,10 @@
           "desktopReadability": {
             "budgetBasis": "recognized-declared-wide",
             "readerContract": "declared-wide-v1",
-            "availableDiagramWidth": 975,
-            "actualBudgetPx": 975,
-            "actualReaderWidth": 1005,
-            "desiredReaderWidth": 1005,
+            "availableDiagramWidth": 979.6875,
+            "actualBudgetPx": 979.6875,
+            "actualReaderWidth": 1009.6875,
+            "desiredReaderWidth": 1009.6875,
             "viewportCap": 1376,
             "limit": "source-size",
             "requestedTargetPx": 7.5,
@@ -247,16 +247,16 @@
           "issues": []
         },
         "provenance": "current",
-        "deliveryReceiptId": "6c4e4103-1ae3-4ebf-b980-578ed1697d61"
+        "deliveryReceiptId": "de08746a-f925-4139-aa3e-eb9160460ad5"
       }
     },
     "browser-check": {
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 2471,
+      "durationMs": 2961,
       "command": [
         "C:\\Program Files\\nodejs\\node.exe",
-        "C:\\Users\\Shoeb Khan\\.agents\\skills\\archify\\bin\\archify.mjs",
+        "D:\\Abdul Basit\\paid-client-portal\\.agents\\skills\\archify\\bin\\archify.mjs",
         "browser-check",
         "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\paid-client-access.html",
         "--json",
@@ -271,11 +271,11 @@
         "status": "pass",
         "visualReview": "not-requested",
         "provenance": "current",
-        "deliveryReceiptId": "6c4e4103-1ae3-4ebf-b980-578ed1697d61",
+        "deliveryReceiptId": "de08746a-f925-4139-aa3e-eb9160460ad5",
         "artifact": {
           "path": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\paid-client-access.html",
-          "sha256": "b7fdc07af95e50a27e76ca530c646d3a21f218c05b00091bf5464743948cff45",
-          "bytes": 764744
+          "sha256": "ad13420e2e3eba7816f1e93323c84c0fdde116eeaf19ee29c66e994d52167359",
+          "bytes": 765148
         },
         "state": {
           "detail": "read",
@@ -306,17 +306,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1238,
-              "diagramWidth": 1208,
+              "readerWidth": 1218,
+              "diagramWidth": 1188,
               "pageComposition": {
                 "bodyPaddingPx": 12,
-                "headerPx": 52,
+                "headerPx": 68,
                 "diagramChromePx": 78,
-                "svgPx": 746,
+                "svgPx": 730,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -358,17 +358,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1294,
-              "diagramWidth": 1264,
+              "readerWidth": 1274,
+              "diagramWidth": 1244,
               "pageComposition": {
                 "bodyPaddingPx": 64,
-                "headerPx": 60,
+                "headerPx": 76,
                 "diagramChromePx": 84,
-                "svgPx": 780,
+                "svgPx": 764,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -410,17 +410,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1423,
-              "diagramWidth": 1393,
+              "readerWidth": 1404,
+              "diagramWidth": 1374,
               "pageComposition": {
                 "bodyPaddingPx": 64,
-                "headerPx": 60,
+                "headerPx": 76,
                 "diagramChromePx": 84,
-                "svgPx": 860,
+                "svgPx": 844,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -462,8 +462,8 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1803,
-              "diagramWidth": 1753,
+              "readerWidth": 1811,
+              "diagramWidth": 1761,
               "pageComposition": {
                 "bodyPaddingPx": 64,
                 "headerPx": 68,
@@ -472,7 +472,7 @@
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -567,17 +567,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1238,
-              "diagramWidth": 1208,
+              "readerWidth": 1218,
+              "diagramWidth": 1188,
               "pageComposition": {
                 "bodyPaddingPx": 12,
-                "headerPx": 52,
+                "headerPx": 68,
                 "diagramChromePx": 78,
-                "svgPx": 746,
+                "svgPx": 730,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -619,17 +619,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1294,
-              "diagramWidth": 1264,
+              "readerWidth": 1274,
+              "diagramWidth": 1244,
               "pageComposition": {
                 "bodyPaddingPx": 64,
-                "headerPx": 60,
+                "headerPx": 76,
                 "diagramChromePx": 84,
-                "svgPx": 780,
+                "svgPx": 764,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -671,17 +671,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1423,
-              "diagramWidth": 1393,
+              "readerWidth": 1404,
+              "diagramWidth": 1374,
               "pageComposition": {
                 "bodyPaddingPx": 64,
-                "headerPx": 60,
+                "headerPx": 76,
                 "diagramChromePx": 84,
-                "svgPx": 860,
+                "svgPx": 844,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -723,8 +723,8 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1803,
-              "diagramWidth": 1753,
+              "readerWidth": 1811,
+              "diagramWidth": 1761,
               "pageComposition": {
                 "bodyPaddingPx": 64,
                 "headerPx": 68,
@@ -733,7 +733,7 @@
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -780,17 +780,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1238,
-              "diagramWidth": 1208,
+              "readerWidth": 1218,
+              "diagramWidth": 1188,
               "pageComposition": {
                 "bodyPaddingPx": 12,
-                "headerPx": 52,
+                "headerPx": 68,
                 "diagramChromePx": 78,
-                "svgPx": 746,
+                "svgPx": 730,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -832,17 +832,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1294,
-              "diagramWidth": 1264,
+              "readerWidth": 1274,
+              "diagramWidth": 1244,
               "pageComposition": {
                 "bodyPaddingPx": 64,
-                "headerPx": 60,
+                "headerPx": 76,
                 "diagramChromePx": 84,
-                "svgPx": 780,
+                "svgPx": 764,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -884,17 +884,17 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1423,
-              "diagramWidth": 1393,
+              "readerWidth": 1404,
+              "diagramWidth": 1374,
               "pageComposition": {
                 "bodyPaddingPx": 64,
-                "headerPx": 60,
+                "headerPx": 76,
                 "diagramChromePx": 84,
-                "svgPx": 860,
+                "svgPx": 844,
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -936,8 +936,8 @@
               "readerOverflow": null,
               "readerFit": "intrinsic-height",
               "ok": true,
-              "readerWidth": 1803,
-              "diagramWidth": 1753,
+              "readerWidth": 1811,
+              "diagramWidth": 1761,
               "pageComposition": {
                 "bodyPaddingPx": 64,
                 "headerPx": 68,
@@ -946,7 +946,7 @@
                 "cardsPx": 0,
                 "viewBoxHeight": 642
               },
-              "viewBoxWidth": 1040,
+              "viewBoxWidth": 1045,
               "minimumProjectedNodeTextPx": 8,
               "minimumProjectedNonEdgeTextPx": 9,
               "minimumProjectedEdgeTextPx": 8,
@@ -993,8 +993,8 @@
     "browserCheckReceipt": "D:\\Abdul Basit\\paid-client-portal\\.archify\\architecture-paid-client-access-20261030-161000\\paid-client-access.browser-check.json"
   },
   "visualReview": "not-requested",
-  "finishedAt": "2026-10-30T10:41:04.964Z",
-  "durationMs": 4821,
+  "finishedAt": "2026-10-30T13:43:22.449Z",
+  "durationMs": 5159,
   "update": {
     "status": "update_available",
     "installedVersion": "3.0.1",
@@ -1002,9 +1002,9 @@
     "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.0",
     "severity": "normal",
     "checkedAt": "2026-10-30T10:41:00.643Z",
-    "source": "network",
+    "source": "cache",
     "noticeRequired": true,
-    "noticeText": "Archify update: 3.0.1 → 3.2.0. A newer release is available. Release notes: https://github.com/tt-a1i/archify/releases/tag/v3.2.0. The installed Skill has not changed; ask to snooze or ignore this reminder.",
+    "noticeText": "Archify update: 3.0.1 → 3.2.0. A previous check at 2026-10-30T10:41:00.643Z found a newer release. Release notes: https://github.com/tt-a1i/archify/releases/tag/v3.2.0. The installed Skill has not changed; ask to snooze or ignore this reminder.",
     "eventKey": "archify@sha256:70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
   }
 }

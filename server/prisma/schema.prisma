@@ -39,6 +39,7 @@ model Document {
   title       String
   description String
   priceCents  Int              @default(499900) @map("price_cents") // Stored in paise (₹4,999.00 INR)
+  zohoDealId  String?          @map("zoho_deal_id") // Dedicated Zoho CRM Deal ID for this document
   ownerId     String?          @map("owner_id") @db.Uuid // Optional client-specific assignment
   createdAt   DateTime         @default(now()) @map("created_at")
 

@@ -41,7 +41,7 @@ export function AccountSyncCard({
       {/* Account Summary Card */}
       <Card>
         <CardHeader className="pb-4">
-          <div className="flex items-center gap-2 text-blue-600 text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-[#2F5CEA] text-xs font-bold uppercase tracking-wider">
             <Building2 className="h-4 w-4" aria-hidden="true" />
             <span>Your Client Account</span>
           </div>
@@ -49,13 +49,13 @@ export function AccountSyncCard({
           <CardDescription>{profile?.email}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-xs">
-          <div className="flex items-center justify-between rounded-lg bg-slate-50 border border-slate-200/80 px-3 py-2.5">
-            <span className="text-slate-500 font-medium">Account Deal Reference</span>
-            <span className="font-mono font-semibold text-slate-800">
+          <div className="flex items-center justify-between rounded-lg bg-[#F4F7FE] border border-[#2F5CEA]/15 px-3 py-2.5">
+            <span className="text-slate-500 font-medium">Primary Zoho Deal ID</span>
+            <span className="font-mono font-semibold text-[#0B132B]">
               #{profile?.zoho_deal_id || 'Not Assigned'}
             </span>
           </div>
-          <div className="flex items-center justify-between rounded-lg bg-slate-50 border border-slate-200/80 px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-lg bg-[#F4F7FE] border border-[#2F5CEA]/15 px-3 py-2.5">
             <span className="text-slate-500 font-medium">Unlocked Documents</span>
             <span className="font-semibold text-emerald-700">
               {purchases.filter((p) => p.status === 'PAID').length} Paid
@@ -67,21 +67,21 @@ export function AccountSyncCard({
       {/* Payment Receipts & Account Manager (Zoho CRM) Sync Status */}
       <Card>
         <CardHeader className="pb-4">
-          <div className="flex items-center gap-2 text-blue-600 text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-[#2F5CEA] text-xs font-bold uppercase tracking-wider">
             <ReceiptIndianRupee className="h-4 w-4" aria-hidden="true" />
             <span>Payment &amp; Account Status</span>
           </div>
           <CardTitle className="text-lg pt-1">Order History &amp; CRM Sync</CardTitle>
           <CardDescription>
-            Shows your completed payments in ₹ INR and whether your dedicated account manager’s CRM
-            record has been updated.
+            Shows your completed payments in ₹ INR and whether your Zoho CRM Deal has been updated
+            to Closed Won.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-3">
           {purchases.length === 0 ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-center text-xs text-slate-500">
-              No payments completed yet. Once you unlock a document, your receipt and account sync
+              No payments completed yet. Once you unlock a document, your receipt and Zoho CRM sync
               status will appear here.
             </div>
           ) : (
@@ -96,24 +96,32 @@ export function AccountSyncCard({
                   className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-slate-900">
+                    <span className="text-sm font-bold text-[#0B132B]">
                       Paid {formatINR(purchase.amount_cents)}
                     </span>
                     <Badge variant="default">Payment Confirmed</Badge>
                   </div>
 
                   <div className="space-y-1.5 text-xs text-slate-600">
+                    {syncLog?.zoho_deal_id && (
+                      <div className="flex items-center justify-between">
+                        <span>Target Zoho Deal ID:</span>
+                        <span className="font-mono font-semibold text-[#0B132B]">
+                          #{syncLog.zoho_deal_id}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
-                      <span>Account Manager CRM Status:</span>
+                      <span>Zoho CRM Sync Status:</span>
                       {isSynced ? (
                         <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                           <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          Synced
+                          Synced ({syncLog?.attempts} {syncLog?.attempts === 1 ? 'attempt' : 'attempts'})
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 font-semibold text-amber-700">
                           <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                          Sync Pending
+                          Sync Pending ({syncLog?.attempts || 1} attempts)
                         </span>
                       )}
                     </div>

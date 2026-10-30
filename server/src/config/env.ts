@@ -2,14 +2,11 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-// Load env in priority order: server/.env.local -> server/.env -> root .env.local -> root .env
+// Load env in priority order: server/.env.local -> server/.env
 const serverRoot = path.resolve(__dirname, '../..');
-const workspaceRoot = path.resolve(serverRoot, '..');
 
 dotenv.config({ path: path.join(serverRoot, '.env.local') });
 dotenv.config({ path: path.join(serverRoot, '.env') });
-dotenv.config({ path: path.join(workspaceRoot, '.env.local') });
-dotenv.config({ path: path.join(workspaceRoot, '.env') });
 
 const envSchema = z.object({
   PORT: z.string().default('4000'),
@@ -30,14 +27,14 @@ const envSchema = z.object({
   ZOHO_CLIENT_ID: z.string().default('1000.PLACEHOLDER_CLIENT_ID'),
   ZOHO_CLIENT_SECRET: z.string().default('placeholder_client_secret'),
   ZOHO_REFRESH_TOKEN: z.string().default('1000.placeholder_refresh_token'),
-  ZOHO_ACCOUNTS_URL: z.string().default('https://accounts.zoho.com'),
-  ZOHO_API_URL: z.string().default('https://www.zohoapis.com'),
+  ZOHO_ACCOUNTS_URL: z.string().default('https://accounts.zoho.in'),
+  ZOHO_API_URL: z.string().default('https://www.zohoapis.in'),
   ZOHO_PAID_STAGE: z.string().default('Closed Won'),
   ZOHO_FORCE_FAIL: z.string().default('false'),
 
-  // Stable mapped Zoho Deal IDs for seeded test clients
-  ZOHO_DEAL_ID_ALICE: z.string().default('615294000000491001'),
-  ZOHO_DEAL_ID_BOB: z.string().default('615294000000491002'),
+  // Optional fallback Deal IDs if Zoho API auto-creation is skipped
+  ZOHO_DEAL_ID_ALICE: z.string().default('1466428000000480422'),
+  ZOHO_DEAL_ID_BOB: z.string().default('1466428000000480456'),
 });
 
 export const env = envSchema.parse(process.env);
