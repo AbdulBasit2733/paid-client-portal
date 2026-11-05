@@ -35,12 +35,6 @@ app.get('/api/health', (_req, res) => {
     status: 'ok',
     service: 'paid-client-portal-server',
     timestamp: new Date().toISOString(),
-    configStatus: {
-      supabaseConfigured: !isPlaceholderKey(env.SUPABASE_URL),
-      stripeConfigured: !isPlaceholderKey(env.STRIPE_SECRET_KEY),
-      stripeWebhookConfigured: !isPlaceholderKey(env.STRIPE_WEBHOOK_SECRET),
-      zohoConfigured: !isPlaceholderKey(env.ZOHO_REFRESH_TOKEN),
-    },
   });
 });
 
